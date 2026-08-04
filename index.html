@@ -46,12 +46,28 @@
                 </div>
 
 <!-- DENGAN FITUR TOGGLE PASSWORD -->
-<div class="form-group">
+<!-- <div class="form-group">
     <label for="login-password">Password</label>
     <div style="position: relative; display: flex; align-items: center;">
-        <input type="password" id="login-password" required placeholder="Masukkan password Anda" style="padding-right: 2.5rem; width: 100%;">
+        <input type="password" id="login-password" required placeholder="Masukkan password Anda" style="padding-right: 2.5rem; width: 100%;"> -->
         
         <!-- IKON MATA TOGGLE PASSWORD -->
+        <!-- <i class="fa-solid fa-eye" id="toggle-login-password" style="position: absolute; right: 10px; cursor: pointer; color: var(--text-muted); padding: 5px;"></i>
+    </div>
+</div> -->
+
+<div class="form-group">
+    <!-- LABEL & LINK LUPA PASSWORD SEJAJAR -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <label for="login-password" style="margin: 0;">Password</label>
+        <a href="#" id="link-to-forgot" style="color: var(--primary-color); text-decoration: none; font-size: 0.8rem; font-weight: 500;">
+            Lupa Password?
+        </a>
+    </div>
+
+    <!-- INPUT & TOGGLE MATA -->
+    <div style="position: relative; display: flex; align-items: center;">
+        <input type="password" id="login-password" required placeholder="Masukkan password Anda" style="padding-right: 2.5rem; width: 100%;">
         <i class="fa-solid fa-eye" id="toggle-login-password" style="position: absolute; right: 10px; cursor: pointer; color: var(--text-muted); padding: 5px;"></i>
     </div>
 </div>
