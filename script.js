@@ -644,10 +644,31 @@ window.deleteReport = async function(id) {
 };
 
 function updateDashboard() {
+    // 1. Total Sesi Mentoring
     if (statTotalMentors) statTotalMentors.textContent = reports.length;
-    const totalMembers = reports.reduce((acc, curr) => acc + parseInt(curr.member_count || 0), 0);
-    if (statTotalMembers) statTotalMembers.textContent = totalMembers;
-    const uniqueMaterials = new Set(reports.map(r => (r.materi || '').trim().toLowerCase())).size;
+
+    // 2. Total Anggota Terbina (Menghitung Nama Unik / Tidak Diakumulasikan Per Sesi)
+    const uniqueMembers = new Set();
+
+    reports.forEach(r => {
+        // Jika ada data array nama anggota (attendees)
+        if (Array.isArray(r.attendees) && r.attendees.length > 0) {
+            r.attendees.forEach(m => {
+                const memberName = typeof m === 'object' ? m.name : m;
+                if (memberName) {
+                    uniqueMembers.add(memberName.trim().toLowerCase());
+                }
+            });
+        }
+    });
+
+    // Tampilkan jumlah unik nama anggota (jika belum ada detail nama, gunakan estimasi fallback)
+    if (statTotalMembers) {
+        statTotalMembers.textContent = uniqueMembers.size > 0 ? uniqueMembers.size : 0;
+    }
+
+    // 3. Total Materi Unik
+    const uniqueMaterials = new Set(reports.map(r => (r.materi || '').trim().toLowerCase()).filter(Boolean)).size;
     if (statTotalMaterials) statTotalMaterials.textContent = uniqueMaterials;
 }
 
