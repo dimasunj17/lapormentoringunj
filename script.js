@@ -799,29 +799,70 @@ window.changeUserRole = async function(userId, newRole) {
     }
 };
 
-// --- EXPORT TO EXCEL ---
+// --- EXPORT TO EXCEL (LENGKAP DENGAN DAFTAR NAMA ANGGOTA) ---
 if (btnExportExcel) {
     btnExportExcel.addEventListener('click', () => {
         const dataToExport = currentFilteredReports.length > 0 ? currentFilteredReports : reports;
         if (dataToExport.length === 0) return alert('Tidak ada data laporan untuk diekspor!');
 
-        const excelData = dataToExport.map((item, index) => ({
-            "No": index + 1,
-            "Nama Mentor": item.mentor_name,
-            "Tanggal Mentoring": item.mentoring_date || '-',
-            "Waktu": item.mentoring_time || '-',
-            "Tempat / Lokasi": item.location || '-',
-            "Jumlah Anggota Hadir": item.member_count,
-            "Fakultas": item.fakultas,
-            "Program Studi": item.prodi,
-            "Angkatan": item.angkatan,
-            "Materi Disampaikan": item.materi
-        }));
+        const excelData = dataToExport.map((item, index) => {
+            // 1. Ekstrak & Format Daftar Nama Anggota dari Array Attendees
+            let daftarAnggotaHadir = '-';
+            let daftarAnggotaAbsen = '-';
 
+            if (Array.isArray(item.attendees) && item.attendees.length > 0) {
+                // Ambil anggota yang Hadir
+                const hadirList = item.attendees
+                    .filter(m => m.isPresent)
+                    .map(m => typeof m === 'object' ? m.name : m);
+                if (hadirList.length > 0) daftarAnggotaHadir = hadirList.join(', ');
+
+                // Ambil anggota yang Tidak Hadir / Absen
+                const absenList = item.attendees
+                    .filter(m => !m.isPresent)
+                    .map(m => typeof m === 'object' ? m.name : m);
+                if (absenList.length > 0) daftarAnggotaAbsen = absenList.join(', ');
+            }
+
+            // 2. Susun Struktur Baris Excel
+            return {
+                "No": index + 1,
+                "Nama Mentor": item.mentor_name || '-',
+                "Tanggal Mentoring": item.mentoring_date || '-',
+                "Waktu": item.mentoring_time || '-',
+                "Tempat / Lokasi": item.location || '-',
+                "Fakultas": item.fakultas || '-',
+                "Program Studi": item.prodi || '-',
+                "Angkatan": item.angkatan || '-',
+                "Jumlah Hadir": item.member_count || 0,
+                "Daftar Anggota Hadir": daftarAnggotaHadir, // <-- KOLOM NAMA ANGGOTA HADIR
+                "Daftar Anggota Tidak Hadir": daftarAnggotaAbsen, // <-- KOLOM NAMA ANGGOTA ABSEN
+                "Materi Disampaikan": item.materi || '-'
+            };
+        });
+
+        // 3. Generate & Download File Excel
         const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Atur lebar kolom otomatis agar tulisan nama rapi
+        worksheet['!cols'] = [
+            { wch: 5 },  // No
+            { wch: 22 }, // Mentor
+            { wch: 15 }, // Tanggal
+            { wch: 10 }, // Waktu
+            { wch: 20 }, // Lokasi
+            { wch: 12 }, // Fakultas
+            { wch: 22 }, // Prodi
+            { wch: 10 }, // Angkatan
+            { wch: 12 }, // Jml Hadir
+            { wch: 40 }, // Nama Hadir
+            { wch: 30 }, // Nama Absen
+            { wch: 35 }  // Materi
+        ];
+
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Mentoring");
-        XLSX.writeFile(workbook, `Laporan_Mentoring_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `Rekap_Laporan_Mentoring_${new Date().toISOString().split('T')[0]}.xlsx`);
     });
 }
 
