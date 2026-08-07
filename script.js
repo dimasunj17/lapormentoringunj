@@ -274,6 +274,57 @@ if (forgotForm) {
     });
 }
 
+// ==========================================================================
+// TARUH KODE UNTUK UPDATE PASSWORD BARU TEPAT DI SINI (BARU):
+// ==========================================================================
+
+// 1. Deteksi saat user membuka web dari Link Email Reset Password
+_supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+        const modalReset = document.getElementById('modal-reset-password');
+        if (modalReset) modalReset.classList.add('active');
+    }
+});
+
+// 2. Kirim Password Baru yang Diinput User ke Supabase
+const updatePasswordForm = document.getElementById('update-password-form');
+
+if (updatePasswordForm) {
+    updatePasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSubmit = document.getElementById('btn-submit-update-pwd');
+        const newPassword = document.getElementById('new-password').value;
+        const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+        if (newPassword !== confirmNewPassword) {
+            return alert('Password baru dan konfirmasi password tidak cocok!');
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Updating...";
+
+        try {
+            const { error } = await _supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+
+            alert('Password berhasil diperbarui! Silakan gunakan password baru ini untuk login.');
+            
+            const modalReset = document.getElementById('modal-reset-password');
+            if (modalReset) modalReset.classList.remove('active');
+            
+            updatePasswordForm.reset();
+            checkSession();
+
+        } catch (err) {
+            alert('Gagal memperbarui password: ' + err.message);
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Simpan Password Baru";
+        }
+    });
+}
+// ==========================================================================
+
 // PERMISSIONS CONTROL
 function applyRolePermissions() {
     const isViewer = currentUserData.role === 'Viewer';
