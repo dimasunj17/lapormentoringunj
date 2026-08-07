@@ -275,20 +275,20 @@ if (forgotForm) {
 }
 
 // ==========================================================================
-// TARUH KODE DI BAWAH INI TEPAT DI SINI (BARU):
+// TARUH KODE UNTUK UPDATE PASSWORD BARU TEPAT DI SINI (BARU):
 // ==========================================================================
 
-// 1. DETEKSI EVENT RESET PASSWORD VIA EMAIL
+// DETEKSI EVENT RESET PASSWORD VIA EMAIL
 _supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
         const modalReset = document.getElementById('modal-reset-password');
         if (modalReset) {
-            modalReset.style.display = 'flex'; // Tampilkan Modal di Tengah
+            modalReset.style.display = 'flex'; // Tampilkan Modal
         }
     }
 });
 
-// 2. SUBMIT PASSWORD BARU DAN AUTO LOGOUT
+// SUBMIT PASSWORD BARU
 const updatePasswordForm = document.getElementById('update-password-form');
 
 if (updatePasswordForm) {
@@ -306,60 +306,21 @@ if (updatePasswordForm) {
         btnSubmit.textContent = "Menyimpan...";
 
         try {
-            // Update Password di Supabase
+            // 1. Update Password di Supabase
             const { error } = await _supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
 
             alert('Password berhasil diperbarui! Silakan masuk kembali dengan password baru Anda.');
 
-            // Sembunyikan Modal
+            // 2. Sembunyikan Modal
             const modalReset = document.getElementById('modal-reset-password');
             if (modalReset) modalReset.style.display = 'none';
 
             updatePasswordForm.reset();
 
-            // LOGOUT OTOMATIS ke Halaman Login
+            // 3. LOGOUT OTOMATIS & Arahkan ke Form Login
             await _supabase.auth.signOut();
-            checkSession(); 
-
-        } catch (err) {
-            alert('Gagal memperbarui password: ' + err.message);
-        } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = "Simpan Password Baru";
-        }
-    });
-}
-// ==========================================================================
-
-// 2. Kirim Password Baru yang Diinput User ke Supabase
-const updatePasswordForm = document.getElementById('update-password-form');
-
-if (updatePasswordForm) {
-    updatePasswordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btnSubmit = document.getElementById('btn-submit-update-pwd');
-        const newPassword = document.getElementById('new-password').value;
-        const confirmNewPassword = document.getElementById('confirm-new-password').value;
-
-        if (newPassword !== confirmNewPassword) {
-            return alert('Password baru dan konfirmasi password tidak cocok!');
-        }
-
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = "Updating...";
-
-        try {
-            const { error } = await _supabase.auth.updateUser({ password: newPassword });
-            if (error) throw error;
-
-            alert('Password berhasil diperbarui! Silakan gunakan password baru ini untuk login.');
-            
-            const modalReset = document.getElementById('modal-reset-password');
-            if (modalReset) modalReset.classList.remove('active');
-            
-            updatePasswordForm.reset();
-            checkSession();
+            checkSession(); // Kembali ke halaman awal login
 
         } catch (err) {
             alert('Gagal memperbarui password: ' + err.message);
