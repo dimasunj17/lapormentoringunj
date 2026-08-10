@@ -506,3 +506,18 @@ th {
     gap: 0.75rem;
     margin-top: 1.5rem;
 }
+
+/* Mencegah Navbar Melebar Melebihi Layar Browser */
+.navbar {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+}
+
+.brand-logo h1 {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.user-profile {
+    margin-left: auto !important;
+}
