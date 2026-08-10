@@ -139,6 +139,7 @@ async function checkSession() {
     }
 }
 
+
 if (linkToRegister) linkToRegister.addEventListener('click', (e) => { e.preventDefault(); showAuthForm(registerForm); });
 if (linkToLoginFromReg) linkToLoginFromReg.addEventListener('click', (e) => { e.preventDefault(); showAuthForm(loginForm); });
 if (linkToForgot) linkToForgot.addEventListener('click', (e) => { e.preventDefault(); showAuthForm(forgotForm); });
@@ -278,17 +279,15 @@ if (forgotForm) {
 // TARUH KODE UNTUK UPDATE PASSWORD BARU TEPAT DI SINI (BARU):
 // ==========================================================================
 
-// DETEKSI EVENT RESET PASSWORD VIA EMAIL
+// 1. Deteksi saat user membuka web dari Link Email Reset Password
 _supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
         const modalReset = document.getElementById('modal-reset-password');
-        if (modalReset) {
-            modalReset.style.display = 'flex'; // Tampilkan Modal
-        }
+        if (modalReset) modalReset.classList.add('active');
     }
 });
 
-// SUBMIT PASSWORD BARU
+// 2. Kirim Password Baru yang Diinput User ke Supabase
 const updatePasswordForm = document.getElementById('update-password-form');
 
 if (updatePasswordForm) {
@@ -303,24 +302,19 @@ if (updatePasswordForm) {
         }
 
         btnSubmit.disabled = true;
-        btnSubmit.textContent = "Menyimpan...";
+        btnSubmit.textContent = "Updating...";
 
         try {
-            // 1. Update Password di Supabase
             const { error } = await _supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
 
-            alert('Password berhasil diperbarui! Silakan masuk kembali dengan password baru Anda.');
-
-            // 2. Sembunyikan Modal
+            alert('Password berhasil diperbarui! Silakan gunakan password baru ini untuk login.');
+            
             const modalReset = document.getElementById('modal-reset-password');
-            if (modalReset) modalReset.style.display = 'none';
-
+            if (modalReset) modalReset.classList.remove('active');
+            
             updatePasswordForm.reset();
-
-            // 3. LOGOUT OTOMATIS & Arahkan ke Form Login
-            await _supabase.auth.signOut();
-            checkSession(); // Kembali ke halaman awal login
+            checkSession();
 
         } catch (err) {
             alert('Gagal memperbarui password: ' + err.message);
@@ -1045,3 +1039,286 @@ function renderKeterlaksanaanChart() {
         }
     });
 }
+
+// ==========================================================================
+// --- MANAJEMEN & EDIT PROFIL PENGGUNA ---
+// ==========================================================================
+
+const btnOpenProfile = document.getElementById('btn-open-profile');
+const btnCloseProfile = document.getElementById('btn-close-profile');
+const modalUserProfile = document.getElementById('modal-user-profile');
+
+const profileViewMode = document.getElementById('profile-view-mode');
+const editProfileForm = document.getElementById('edit-profile-form');
+const btnEditProfile = document.getElementById('btn-edit-profile');
+const btnCancelEditProfile = document.getElementById('btn-cancel-edit-profile');
+
+if (btnOpenProfile) btnOpenProfile.addEventListener('click', showUserProfileModal);
+if (btnCloseProfile) btnCloseProfile.addEventListener('click', closeModalProfile);
+
+if (btnEditProfile) {
+    btnEditProfile.addEventListener('click', () => {
+        // Isi input nama & email saat ini ke dalam form edit
+        document.getElementById('edit-profile-name').value = currentUserData.name || '';
+        document.getElementById('edit-profile-email').value = currentUserData.email || '';
+        document.getElementById('edit-profile-password').value = '';
+
+        // Switch tampilan ke Form Edit
+        if (profileViewMode) profileViewMode.style.display = 'none';
+        if (editProfileForm) editProfileForm.style.display = 'block';
+    });
+}
+
+if (btnCancelEditProfile) {
+    btnCancelEditProfile.addEventListener('click', () => {
+        // Kembali ke Mode View
+        if (editProfileForm) editProfileForm.style.display = 'none';
+        if (profileViewMode) profileViewMode.style.display = 'block';
+    });
+}
+
+function closeModalProfile() {
+    if (modalUserProfile) modalUserProfile.style.display = 'none';
+    if (editProfileForm) editProfileForm.style.display = 'none';
+    if (profileViewMode) profileViewMode.style.display = 'block';
+}
+
+function showUserProfileModal() {
+    if (!currentUserData) return alert('Data pengguna tidak ditemukan!');
+
+    // Reset ke View Mode saat dibuka
+    if (editProfileForm) editProfileForm.style.display = 'none';
+    if (profileViewMode) profileViewMode.style.display = 'block';
+
+    // 1. Inisial Avatar
+    const firstLetter = currentUserData.name ? currentUserData.name.charAt(0).toUpperCase() : 'U';
+    const profileAvatar = document.getElementById('profile-avatar');
+    const navAvatar = document.getElementById('nav-avatar');
+    
+    if (profileAvatar) profileAvatar.textContent = firstLetter;
+    if (navAvatar) navAvatar.textContent = firstLetter;
+
+    // 2. Data Dasar
+    document.getElementById('profile-name').textContent = currentUserData.name || '-';
+    document.getElementById('profile-email').textContent = currentUserData.email || '-';
+    document.getElementById('profile-fakultas').textContent = currentUserData.fakultas || 'Semua Fakultas (Pusat)';
+    document.getElementById('profile-role-badge').textContent = currentUserData.role || 'User';
+
+    // 3. Penyesuaian Detail Berdasarkan Role
+    const profileScope = document.getElementById('profile-scope');
+    const mentorSection = document.getElementById('profile-mentor-section');
+
+    if (currentUserData.role === 'Mentor') {
+        if (profileScope) profileScope.textContent = 'Khusus Kelompok Binaan Sendiri';
+        if (mentorSection) mentorSection.style.display = 'block';
+
+        const groupMembers = currentUserData.group_members || [];
+        const countElem = document.getElementById('profile-group-count');
+        if (countElem) countElem.textContent = groupMembers.length;
+        
+        const groupListContainer = document.getElementById('profile-group-list');
+        if (groupListContainer) {
+            if (groupMembers.length > 0) {
+                groupListContainer.innerHTML = groupMembers.map((m, idx) => `
+                    <div style="padding: 2px 0;">${idx + 1}. ${escapeHtml(typeof m === 'object' ? m.name : m)}</div>
+                `).join('');
+            } else {
+                groupListContainer.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Belum menyimpan Kelompok Binaan Tetap.</span>';
+            }
+        }
+
+    } else if (currentUserData.role === 'Pengelola') {
+        if (profileScope) profileScope.textContent = `Pengelola Tingkat ${currentUserData.fakultas || 'Fakultas'}`;
+        if (mentorSection) mentorSection.style.display = 'none';
+
+    } else if (currentUserData.role === 'Viewer') {
+        if (profileScope) profileScope.textContent = 'Monitoring Data Nasional (Read-Only)';
+        if (mentorSection) mentorSection.style.display = 'none';
+
+    } else if (currentUserData.role === 'Admin Super') {
+        if (profileScope) profileScope.textContent = 'Akses Penuh Seluruh Sistem & User';
+        if (mentorSection) mentorSection.style.display = 'none';
+    }
+
+    if (modalUserProfile) modalUserProfile.style.display = 'flex';
+}
+
+// SIMPAN PERUBAHAN PROFIL KE DATABASE SUPABASE
+if (editProfileForm) {
+    editProfileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSave = document.getElementById('btn-save-profile');
+        const newName = document.getElementById('edit-profile-name').value.trim();
+        const newEmail = document.getElementById('edit-profile-email').value.trim();
+        const newPassword = document.getElementById('edit-profile-password').value;
+
+        if (!newName || !newEmail) return alert('Nama dan Email tidak boleh kosong!');
+
+        btnSave.disabled = true;
+        btnSave.textContent = 'Menyimpan...';
+
+        try {
+            // 1. Update Nama & Email di Tabel 'profiles' Supabase
+            const { error: profileError } = await _supabase
+                .from('profiles')
+                .update({ 
+                    name: newName,
+                    email: newEmail 
+                })
+                .eq('id', currentUserData.id);
+
+            if (profileError) throw profileError;
+
+            // 2. Jika Email Berubah, Update Email di Supabase Auth
+            let emailConfirmNotice = false;
+            if (newEmail !== currentUserData.email) {
+                const { error: authEmailError } = await _supabase.auth.updateUser({ email: newEmail });
+                if (authEmailError) throw authEmailError;
+                emailConfirmNotice = true;
+            }
+
+            // 3. Jika Password Diisi, Update Password di Supabase Auth
+            if (newPassword) {
+                if (newPassword.length < 6) throw new Error('Password minimal 6 karakter!');
+                const { error: pwdError } = await _supabase.auth.updateUser({ password: newPassword });
+                if (pwdError) throw pwdError;
+            }
+
+            // 4. Update Local State UI
+            currentUserData.name = newName;
+            currentUserData.email = newEmail;
+
+            if (displayUserName) displayUserName.textContent = newName;
+            
+            const firstLetter = newName.charAt(0).toUpperCase();
+            const navAvatar = document.getElementById('nav-avatar');
+            if (navAvatar) navAvatar.textContent = firstLetter;
+
+            // Beri notifikasi sesuai aksi
+            if (emailConfirmNotice) {
+                alert('Profil diperbarui! Email verifikasi telah dikirimkan ke alamat email baru Anda. Silakan cek inbox/spam untuk mengonfirmasi perubahan email.');
+            } else {
+                alert('Profil berhasil diperbarui!');
+            }
+
+            showUserProfileModal(); // Refresh isi modal profil
+
+        } catch (err) {
+            alert('Gagal memperbarui profil: ' + err.message);
+        } finally {
+            btnSave.disabled = false;
+            btnSave.textContent = 'Simpan Perubahan';
+        }
+    });
+}
+// if (editProfileForm) {
+//     editProfileForm.addEventListener('submit', async (e) => {
+//         e.preventDefault();
+//         const btnSave = document.getElementById('btn-save-profile');
+//         const newName = document.getElementById('edit-profile-name').value.trim();
+//         const newPassword = document.getElementById('edit-profile-password').value;
+
+//         if (!newName) return alert('Nama lengkap tidak boleh kosong!');
+
+//         btnSave.disabled = true;
+//         btnSave.textContent = 'Menyimpan...';
+
+//         try {
+//             // 1. Update Nama di Tabel Profiles
+//             const { error: profileError } = await _supabase
+//                 .from('profiles')
+//                 .update({ name: newName })
+//                 .eq('id', currentUserData.id);
+
+//             if (profileError) throw profileError;
+
+//             // 2. Update Password (jika diisi)
+//             if (newPassword) {
+//                 if (newPassword.length < 6) throw new Error('Password minimal 6 karakter!');
+//                 const { error: pwdError } = await _supabase.auth.updateUser({ password: newPassword });
+//                 if (pwdError) throw pwdError;
+//             }
+
+//             // 3. Update Local State & Tampilan
+//             currentUserData.name = newName;
+//             if (displayUserName) displayUserName.textContent = newName;
+            
+//             const firstLetter = newName.charAt(0).toUpperCase();
+//             const navAvatar = document.getElementById('nav-avatar');
+//             if (navAvatar) navAvatar.textContent = firstLetter;
+
+//             alert('Profil berhasil diperbarui!');
+//             showUserProfileModal(); // Refresh tampilan modal
+
+//         } catch (err) {
+//             alert('Gagal memperbarui profil: ' + err.message);
+//         } finally {
+//             btnSave.disabled = false;
+//             btnSave.textContent = 'Simpan Perubahan';
+//         }
+//     });
+// }
+// // ==========================================================================
+// // --- MANAJEMEN PROFIL PENGGUNA BERDASARKAN HAK AKSES ---
+// // ==========================================================================
+
+// const btnOpenProfile = document.getElementById('btn-open-profile');
+// const btnCloseProfile = document.getElementById('btn-close-profile');
+// const modalUserProfile = document.getElementById('modal-user-profile');
+
+// if (btnOpenProfile) btnOpenProfile.addEventListener('click', showUserProfileModal);
+// if (btnCloseProfile) btnCloseProfile.addEventListener('click', () => {
+//     if (modalUserProfile) modalUserProfile.style.display = 'none';
+// });
+
+// function showUserProfileModal() {
+//     if (!currentUserData) return alert('Data pengguna tidak ditemukan!');
+
+//     // 1. Inisial Avatar (Huruf Depan Nama)
+//     const firstLetter = currentUserData.name ? currentUserData.name.charAt(0).toUpperCase() : 'U';
+//     document.getElementById('profile-avatar').textContent = firstLetter;
+//     if (document.getElementById('nav-avatar')) document.getElementById('nav-avatar').textContent = firstLetter;
+
+//     // 2. Data Dasar
+//     document.getElementById('profile-name').textContent = currentUserData.name || '-';
+//     document.getElementById('profile-email').textContent = currentUserData.email || '-';
+//     document.getElementById('profile-fakultas').textContent = currentUserData.fakultas || 'Semua Fakultas (Pusat)';
+//     document.getElementById('profile-role-badge').textContent = currentUserData.role || 'User';
+
+//     // 3. Penyesuaian Detail Berdasarkan Hak Akses (Role Scope)
+//     const profileScope = document.getElementById('profile-scope');
+//     const mentorSection = document.getElementById('profile-mentor-section');
+
+//     if (currentUserData.role === 'Mentor') {
+//         profileScope.textContent = 'Khusus Kelompok Binaan Sendiri';
+//         mentorSection.style.display = 'block';
+
+//         // Tampilkan Daftar Kelompok Binaan
+//         const groupMembers = currentUserData.group_members || [];
+//         document.getElementById('profile-group-count').textContent = groupMembers.length;
+        
+//         const groupListContainer = document.getElementById('profile-group-list');
+//         if (groupMembers.length > 0) {
+//             groupListContainer.innerHTML = groupMembers.map((m, idx) => `
+//                 <div style="padding: 2px 0;">${idx + 1}. ${escapeHtml(typeof m === 'object' ? m.name : m)}</div>
+//             `).join('');
+//         } else {
+//             groupListContainer.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Belum menyimpan Kelompok Binaan Tetap.</span>';
+//         }
+
+//     } else if (currentUserData.role === 'Pengelola') {
+//         profileScope.textContent = `Pengelola Tingkat ${currentUserData.fakultas || 'Fakultas'}`;
+//         mentorSection.style.display = 'none';
+
+//     } else if (currentUserData.role === 'Viewer') {
+//         profileScope.textContent = 'Monitoring Data Nasional (Read-Only)';
+//         mentorSection.style.display = 'none';
+
+//     } else if (currentUserData.role === 'Admin Super') {
+//         profileScope.textContent = 'Akses Penuh Seluruh Sistem & User';
+//         mentorSection.style.display = 'none';
+//     }
+
+//     // Tampilkan Modal
+//     if (modalUserProfile) modalUserProfile.style.display = 'flex';
+// }

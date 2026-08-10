@@ -171,17 +171,28 @@
         </div>
     </div>
             </div>
-            <div class="user-info">
-                <i class="fa-solid fa-circle-user"></i>
-                <div class="user-details">
-                    <span id="display-user-name">Loading...</span>
-                    <small id="display-user-role" class="badge-role">-</small>
-                </div>
+<!-- ========================================================= -->
+    <!-- AREA USER PROFILE & NAV-AVATAR (DI SEBELAH KANAN)          -->
+    <!-- ========================================================= -->
+    <div class="user-profile" style="display: flex; align-items: center; gap: 1rem;">
+        
+        <!-- TOMBOL PROFIL BISA DIKLIK -->
+        <div id="btn-open-profile" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 8px; transition: background 0.2s;" title="Klik untuk lihat profil">
+            <div id="nav-avatar" style="width: 36px; height: 36px; background: #065f46; color: white; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                U
+            </div>
+            <div style="text-align: left;">
+                <div id="display-user-name" style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">Nama User</div>
+                <small id="display-user-role" style="color: var(--text-muted); font-size: 0.75rem;">Role</small>
+            </div>
+        </div>
                 <button class="btn-logout" id="btn-logout" title="Keluar">
                     <i class="fa-solid fa-right-from-bracket"></i> Keluar
                 </button>
             </div>
         </header>
+
+        
 
         <div class="container">
             
@@ -589,6 +600,145 @@
     </div>
 </div>
 
+<!-- MODAL PROFIL & EDIT PENGGUNA -->
+<div id="modal-user-profile" class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; z-index: 99999;">
+    <div class="modal-content" style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 480px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); max-height: 90vh; overflow-y: auto;">
+        
+        <!-- HEADER PROFIL -->
+        <div style="text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.25rem;">
+            <div style="width: 70px; height: 70px; background: #065f46; color: white; font-size: 2rem; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;" id="profile-avatar">
+                U
+            </div>
+            <h3 id="profile-name" style="margin: 0; color: #0f172a; font-size: 1.2rem;">Nama Pengguna</h3>
+            <span id="profile-role-badge" style="display: inline-block; background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 20px; margin-top: 0.4rem;">
+                Role Pengguna
+            </span>
+        </div>
+
+        <!-- 1. TAMPILAN INFORMASI PROFIL (VIEW MODE) -->
+        <div id="profile-view-mode">
+            <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                    <span style="color: #64748b;"><i class="fa-solid fa-envelope"></i> Email</span>
+                    <strong id="profile-email" style="color: #1e293b;">-</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                    <span style="color: #64748b;"><i class="fa-solid fa-building-columns"></i> Fakultas</span>
+                    <strong id="profile-fakultas" style="color: #1e293b;">-</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                    <span style="color: #64748b;"><i class="fa-solid fa-user-shield"></i> Hak Akses</span>
+                    <strong id="profile-scope" style="color: #1e293b;">-</strong>
+                </div>
+
+                <!-- RINCIAN KHUSUS MENTOR -->
+                <div id="profile-mentor-section" style="display: none; margin-top: 0.5rem;">
+                    <label style="font-weight: 600; color: #0f172a; display: block; margin-bottom: 0.4rem;">
+                        <i class="fa-solid fa-users"></i> Kelompok Binaan Tetap (<span id="profile-group-count">0</span> Orang):
+                    </label>
+                    <div id="profile-group-list" style="max-height: 100px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem; color: #334155;">
+                        Belum ada kelompok disimpan.
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOMBOL AKSI VIEW MODE -->
+            <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; gap: 0.5rem;">
+                <button type="button" id="btn-edit-profile" class="btn btn-primary" style="padding: 0.5rem 1rem; background: #0284c7;">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit Profil
+                </button>
+                <button type="button" id="btn-close-profile" class="btn btn-secondary" style="padding: 0.5rem 1.25rem;">
+                    Tutup
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. FORM EDIT PROFIL (EDIT MODE) -->
+<!-- FORM EDIT PROFIL -->
+<form id="edit-profile-form" style="display: none; margin-top: 1rem;">
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="edit-profile-name" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Nama Lengkap</label>
+        <input type="text" id="edit-profile-name" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+    </div>
+
+    <!-- INPUT EMAIL BARU (BARU) -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="edit-profile-email" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Email Akun</label>
+        <input type="email" id="edit-profile-email" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="edit-profile-password" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Password Baru (Opsional)</label>
+        <input type="password" id="edit-profile-password" placeholder="Biarkan kosong jika tidak diubah" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+    </div>
+
+    <!-- TOMBOL SIMPAN / BATAL EDIT -->
+    <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" id="btn-cancel-edit-profile" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+            Batal
+        </button>
+        <button type="submit" id="btn-save-profile" class="btn btn-primary" style="padding: 0.5rem 1.25rem;">
+            Simpan Perubahan
+        </button>
+    </div>
+</form>
+
+    </div>
+</div>
+<!-- MODAL PROFIL PENGGUNA -->
+<!-- <div id="modal-user-profile" class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; z-index: 99999;">
+    <div class="modal-content" style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 480px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
+        
+        <!- HEADER PROFIL -->
+        <!-- <div style="text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.25rem;">
+            <div style="width: 70px; height: 70px; background: #065f46; color: white; font-size: 2rem; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;" id="profile-avatar">
+                U
+            </div>
+            <h3 id="profile-name" style="margin: 0; color: #0f172a; font-size: 1.2rem;">Nama Pengguna</h3>
+            <span id="profile-role-badge" style="display: inline-block; background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 20px; margin-top: 0.4rem;">
+                Role Pengguna
+            </span>
+        </div> --> 
+
+        <!-- DETAIL INFORMASI SESUAI HAK AKSES -->
+        <!-- <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem;">
+            
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                <span style="color: #64748b;"><i class="fa-solid fa-envelope"></i> Email</span>
+                <strong id="profile-email" style="color: #1e293b;">-</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                <span style="color: #64748b;"><i class="fa-solid fa-building-columns"></i> Fakultas</span>
+                <strong id="profile-fakultas" style="color: #1e293b;">-</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.5rem;">
+                <span style="color: #64748b;"><i class="fa-solid fa-user-shield"></i> Hak Akses (Scope)</span>
+                <strong id="profile-scope" style="color: #1e293b;">-</strong>
+            </div> -->
+
+            <!-- RINCIAN KHUSUS MENTOR (DAFTAR KELOMPOK BINAAN) -->
+            <!-- <div id="profile-mentor-section" style="display: none; margin-top: 0.5rem;">
+                <label style="font-weight: 600; color: #0f172a; display: block; margin-bottom: 0.4rem;">
+                    <i class="fa-solid fa-users"></i> Kelompok Binaan Tetap (<span id="profile-group-count">0</span> Orang):
+                </label>
+                <div id="profile-group-list" style="max-height: 100px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem; color: #334155;">
+                    Belum ada kelompok disimpan.
+                </div>
+            </div>
+
+        </div> -->
+
+        <!-- TOMBOL TUTUP -->
+        <!-- <div style="margin-top: 1.5rem; text-align: right;">
+            <button type="button" id="btn-close-profile" class="btn btn-secondary" style="padding: 0.5rem 1.25rem;">
+                Tutup
+            </button>
+        </div>
+
+    </div>
+</div> -->
     <script src="script.js"></script>
 </body>
 </html>
