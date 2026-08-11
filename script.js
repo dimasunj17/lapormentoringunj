@@ -1211,6 +1211,468 @@ if (editProfileForm) {
         }
     });
 }
+// ==========================================================================
+// FIX BUG TOMBOL EDIT PROFIL PENGGUNA (MODAL PROFILE)
+// ==========================================================================
+
+document.addEventListener('click', (e) => {
+    
+    // 1. DETEKSI KLIK TOMBOL "EDIT PROFIL" DI MODAL PROFIL
+    const btnEditProfile = e.target.closest('#btn-edit-profile') || 
+                           (e.target.textContent && e.target.textContent.includes('Edit Profil'));
+
+    if (btnEditProfile && e.target.closest('#modal-user-profile')) {
+        e.preventDefault();
+        
+        const viewMode = document.getElementById('profile-view-mode');
+        const editForm = document.getElementById('edit-profile-form');
+
+        // Ambil data dari teks yang sedang tampil di modal
+        const currentName = document.getElementById('profile-name')?.textContent || '';
+        const currentEmail = document.getElementById('profile-email')?.textContent || '';
+
+        // Isikan ke input form edit
+        const nameInput = document.getElementById('edit-profile-name');
+        const emailInput = document.getElementById('edit-profile-email');
+        const passInput = document.getElementById('edit-profile-password');
+
+        if (nameInput) nameInput.value = (typeof currentUserData !== 'undefined' && currentUserData.name) ? currentUserData.name : currentName;
+        if (emailInput) emailInput.value = (typeof currentUserData !== 'undefined' && currentUserData.email) ? currentUserData.email : currentEmail;
+        if (passInput) passInput.value = '';
+
+        // Buka Form Edit & Sembunyikan View Mode
+        if (viewMode) viewMode.style.display = 'none';
+        if (editForm) editForm.style.display = 'block';
+    }
+
+    // 2. DETEKSI KLIK TOMBOL "BATAL" EDIT PROFIL
+    const btnCancelProfile = e.target.closest('#btn-cancel-edit-profile') || 
+                             (e.target.textContent && e.target.textContent.trim() === 'Batal' && e.target.closest('#edit-profile-form'));
+
+    if (btnCancelProfile) {
+        e.preventDefault();
+        const viewMode = document.getElementById('profile-view-mode');
+        const editForm = document.getElementById('edit-profile-form');
+
+        if (editForm) editForm.style.display = 'none';
+        if (viewMode) viewMode.style.display = 'block';
+    }
+
+    // 3. DETEKSI KLIK TOMBOL "TUTUP" MODAL PROFIL
+    const btnCloseProfile = e.target.closest('#btn-close-profile') || 
+                            (e.target.textContent && e.target.textContent.trim() === 'Tutup' && e.target.closest('#modal-user-profile'));
+
+    if (btnCloseProfile) {
+        e.preventDefault();
+        const modal = document.getElementById('modal-user-profile');
+        const viewMode = document.getElementById('profile-view-mode');
+        const editForm = document.getElementById('edit-profile-form');
+
+        if (modal) modal.style.display = 'none';
+        if (editForm) editForm.style.display = 'none';
+        if (viewMode) viewMode.style.display = 'block';
+    }
+});
+
+// 4. SUBMIT FORM PERUBAHAN PROFIL TO DATABASE & UI
+document.addEventListener('submit', async (e) => {
+    if (e.target && e.target.id === 'edit-profile-form') {
+        e.preventDefault();
+        
+        const btnSave = document.getElementById('btn-save-profile');
+        const newName = document.getElementById('edit-profile-name')?.value.trim();
+        const newEmail = document.getElementById('edit-profile-email')?.value.trim();
+        const newPassword = document.getElementById('edit-profile-password')?.value;
+
+        if (!newName || !newEmail) {
+            alert('Nama dan Email tidak boleh kosong!');
+            return;
+        }
+
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.textContent = 'Menyimpan...';
+        }
+
+        try {
+            const userId = (typeof currentUserData !== 'undefined') ? currentUserData?.id : null;
+
+            // Update Database Supabase jika terhubung
+            if (typeof _supabase !== 'undefined' && userId) {
+                const { error: profErr } = await _supabase
+                    .from('profiles')
+                    .update({ name: newName, email: newEmail })
+                    .eq('id', userId);
+
+                if (profErr) throw profErr;
+
+                if (newPassword && newPassword.length >= 6) {
+                    await _supabase.auth.updateUser({ password: newPassword });
+                }
+            }
+
+            // Update Tampilan Layar secara Langsung
+            const elemName = document.getElementById('profile-name');
+            const elemEmail = document.getElementById('profile-email');
+            const elemNavName = document.getElementById('display-user-name');
+            const elemNavAvatar = document.getElementById('nav-avatar');
+            const elemProfAvatar = document.getElementById('profile-avatar');
+
+            if (elemName) elemName.textContent = newName;
+            if (elemEmail) elemEmail.textContent = newEmail;
+            if (elemNavName) elemNavName.textContent = newName;
+
+            const firstLetter = newName.charAt(0).toUpperCase();
+            if (elemNavAvatar) elemNavAvatar.textContent = firstLetter;
+            if (elemProfAvatar) elemProfAvatar.textContent = firstLetter;
+
+            if (typeof currentUserData !== 'undefined' && currentUserData) {
+                currentUserData.name = newName;
+                currentUserData.email = newEmail;
+            }
+
+            alert('Profil berhasil diperbarui!');
+
+            // Kembalikan ke View Mode
+            document.getElementById('edit-profile-form').style.display = 'none';
+            document.getElementById('profile-view-mode').style.display = 'block';
+
+        } catch (err) {
+            alert('Gagal menyimpan perubahan: ' + err.message);
+        } finally {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.textContent = 'Simpan Perubahan';
+            }
+        }
+    }
+});
+
+// ==========================================================================
+// HANDLE EDIT PROFIL DENGAN PILIHAN FAKULTAS (DI BARIS PALING BAWAH)
+// ==========================================================================
+
+document.addEventListener('click', (e) => {
+    
+    // 1. KLIK TOMBOL "EDIT PROFIL"
+    const btnEditProfile = e.target.closest('#btn-edit-profile') || 
+                           (e.target.textContent && e.target.textContent.includes('Edit Profil'));
+
+    if (btnEditProfile && e.target.closest('#modal-user-profile')) {
+        e.preventDefault();
+        
+        const viewMode = document.getElementById('profile-view-mode');
+        const editForm = document.getElementById('edit-profile-form');
+
+        // Ambil data terkini dari modal
+        const currentName = document.getElementById('profile-name')?.textContent || '';
+        const currentEmail = document.getElementById('profile-email')?.textContent || '';
+        const currentFakultas = document.getElementById('profile-fakultas')?.textContent || '';
+
+        // Set isi input form edit
+        const nameInput = document.getElementById('edit-profile-name');
+        const emailInput = document.getElementById('edit-profile-email');
+        const fakultasSelect = document.getElementById('edit-profile-fakultas');
+        const passInput = document.getElementById('edit-profile-password');
+
+        if (nameInput) nameInput.value = (typeof currentUserData !== 'undefined' && currentUserData.name) ? currentUserData.name : currentName;
+        if (emailInput) emailInput.value = (typeof currentUserData !== 'undefined' && currentUserData.email) ? currentUserData.email : currentEmail;
+        
+        // Isikan nilai fakultas ke dropdown
+        if (fakultasSelect) {
+            const valFak = (typeof currentUserData !== 'undefined' && currentUserData.fakultas) ? currentUserData.fakultas : currentFakultas;
+            fakultasSelect.value = valFak || 'Semua Fakultas (Pusat)';
+        }
+
+        if (passInput) passInput.value = '';
+
+        // Buka form edit
+        if (viewMode) viewMode.style.display = 'none';
+        if (editForm) editForm.style.display = 'block';
+    }
+});
+
+// 2. SUBMIT PERUBAHAN PROFIL + FAKULTAS TO DATABASE & UI
+document.addEventListener('submit', async (e) => {
+    if (e.target && e.target.id === 'edit-profile-form') {
+        e.preventDefault();
+        
+        const btnSave = document.getElementById('btn-save-profile');
+        const newName = document.getElementById('edit-profile-name')?.value.trim();
+        const newEmail = document.getElementById('edit-profile-email')?.value.trim();
+        const newFakultas = document.getElementById('edit-profile-fakultas')?.value;
+        const newPassword = document.getElementById('edit-profile-password')?.value;
+
+        if (!newName || !newEmail) {
+            alert('Nama dan Email tidak boleh kosong!');
+            return;
+        }
+
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.textContent = 'Menyimpan...';
+        }
+
+        try {
+            const userId = (typeof currentUserData !== 'undefined') ? currentUserData?.id : null;
+
+            // Update ke tabel profiles di Supabase
+            if (typeof _supabase !== 'undefined' && userId) {
+                const { error: profErr } = await _supabase
+                    .from('profiles')
+                    .update({ 
+                        name: newName, 
+                        email: newEmail,
+                        fakultas: newFakultas
+                    })
+                    .eq('id', userId);
+
+                if (profErr) throw profErr;
+
+                if (newPassword && newPassword.length >= 6) {
+                    await _supabase.auth.updateUser({ password: newPassword });
+                }
+            }
+
+            // Update Tampilan Layar secara Langsung
+            const elemName = document.getElementById('profile-name');
+            const elemEmail = document.getElementById('profile-email');
+            const elemFakultas = document.getElementById('profile-fakultas');
+            const elemNavName = document.getElementById('display-user-name');
+            const elemNavAvatar = document.getElementById('nav-avatar');
+            const elemProfAvatar = document.getElementById('profile-avatar');
+
+            if (elemName) elemName.textContent = newName;
+            if (elemEmail) elemEmail.textContent = newEmail;
+            if (elemFakultas) elemFakultas.textContent = newFakultas;
+            if (elemNavName) elemNavName.textContent = newName;
+
+            const firstLetter = newName.charAt(0).toUpperCase();
+            if (elemNavAvatar) elemNavAvatar.textContent = firstLetter;
+            if (elemProfAvatar) elemProfAvatar.textContent = firstLetter;
+
+            if (typeof currentUserData !== 'undefined' && currentUserData) {
+                currentUserData.name = newName;
+                currentUserData.email = newEmail;
+                currentUserData.fakultas = newFakultas;
+            }
+
+            alert('Profil dan Fakultas berhasil diperbarui!');
+
+            // Kembali ke View Mode
+            document.getElementById('edit-profile-form').style.display = 'none';
+            document.getElementById('profile-view-mode').style.display = 'block';
+
+        } catch (err) {
+            alert('Gagal menyimpan perubahan: ' + err.message);
+        } finally {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.textContent = 'Simpan Perubahan';
+            }
+        }
+    }
+});
+// ==========================================================================
+// KODE INTEGRASI PENANGANAN TAMBAH & EDIT LAPORAN (SANGAT STABIL)
+// ==========================================================================
+
+// FUNGSI MENGAMBIL NAMA MENTOR DARI AKUN LOGIN/NAVBAR
+function getActiveMentorName() {
+    let name = '';
+    if (typeof currentUserData !== 'undefined' && currentUserData && currentUserData.name) {
+        name = currentUserData.name;
+    } else {
+        const navName = document.getElementById('display-user-name');
+        if (navName && navName.textContent.trim() !== 'Nama User') {
+            name = navName.textContent.trim();
+        }
+    }
+    return name;
+}
+
+// 1. EVENT CLICK GLOBAL: HANDLE "TAMBAH LAPORAN", "EDIT LAPORAN", DAN "HAPUS LAPORAN"
+document.addEventListener('click', async (e) => {
+
+    // A. KLIK TOMBOL "+ TAMBAH LAPORAN"
+    const btnAdd = e.target.closest('#btn-add-report') || 
+                   (e.target.textContent && e.target.textContent.includes('Tambah Laporan') && !e.target.closest('#modal-report'));
+
+    if (btnAdd) {
+        const form = document.getElementById('report-form');
+        const modal = document.getElementById('modal-report');
+        const title = document.getElementById('modal-report-title');
+
+        if (form) {
+            form.removeAttribute('data-edit-id'); // Bersihkan tanda edit ID
+            form.reset(); // Reset form
+
+            // Isi nama mentor otomatis dengan user login
+            setTimeout(() => {
+                const mentorInput = document.getElementById('report-mentor-name');
+                if (mentorInput) mentorInput.value = getActiveMentorName();
+            }, 50);
+        }
+
+        if (title) title.textContent = 'Form Laporan Mentoring';
+        if (modal) modal.style.display = 'flex';
+        return;
+    }
+
+    // B. KLIK TOMBOL EDIT LAPORAN (IKON PENSIL BIRU)
+    const btnEdit = e.target.closest('.btn-edit-report') || 
+                    e.target.closest('[data-action="edit"]') ||
+                    (e.target.tagName === 'I' && e.target.classList.contains('fa-pen-to-square'));
+
+    if (btnEdit && !e.target.closest('#modal-user-profile')) {
+        e.preventDefault();
+        
+        // Ambil ID dari data-id tombol
+        const targetBtn = btnEdit.hasAttribute('data-id') ? btnEdit : btnEdit.closest('[data-id]');
+        const reportId = targetBtn ? targetBtn.getAttribute('data-id') : null;
+
+        if (!reportId) return alert('Gagal membaca ID Laporan!');
+
+        try {
+            // Ambil data laporan dari Supabase berdasarkan ID
+            const { data: report, error } = await _supabase
+                .from('reports')
+                .select('*')
+                .eq('id', reportId)
+                .single();
+
+            if (error || !report) throw new Error('Data laporan tidak ditemukan di Supabase.');
+
+            const form = document.getElementById('report-form');
+            const modal = document.getElementById('modal-report');
+            const title = document.getElementById('modal-report-title');
+
+            if (form) {
+                // TANDAI BAHWA FORM SEDANG DALAM MODE EDIT
+                form.setAttribute('data-edit-id', reportId);
+
+                // Isikan data laporan lama ke input form (TIDAK TER-OVERWRITE OLEH USER LOGIN)
+                const inputMentor = document.getElementById('report-mentor-name');
+                const inputDate = document.getElementById('report-date');
+                const inputMateri = document.getElementById('report-materi');
+
+                if (inputMentor) inputMentor.value = report.mentor_name || report.mentor || '';
+                if (inputDate) inputDate.value = report.date || (report.created_at ? report.created_at.split('T')[0] : '');
+                if (inputMateri) inputMateri.value = report.materi || report.topic || '';
+
+                // Isikan presensi hadir jika ada
+                const attendeesList = report.attendees || report.hadir || [];
+                if (typeof renderCheckboxesFromList === 'function' && Array.isArray(attendeesList) && attendeesList.length > 0) {
+                    renderCheckboxesFromList(attendeesList);
+                }
+            }
+
+            if (title) title.textContent = 'Edit Laporan Mentoring';
+            if (modal) modal.style.display = 'flex';
+
+        } catch (err) {
+            alert('Gagal memuat data edit: ' + err.message);
+        }
+        return;
+    }
+
+    // C. KLIK TOMBOL HAPUS LAPORAN (IKON SAMPAH MERAH)
+    const btnDelete = e.target.closest('.btn-delete-report') || e.target.closest('[data-action="delete"]');
+    if (btnDelete) {
+        e.preventDefault();
+        const targetBtn = btnDelete.hasAttribute('data-id') ? btnDelete : btnDelete.closest('[data-id]');
+        const reportId = targetBtn ? targetBtn.getAttribute('data-id') : null;
+
+        if (!reportId) return;
+
+        if (confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
+            try {
+                const { error } = await _supabase.from('reports').delete().eq('id', reportId);
+                if (error) throw error;
+
+                alert('Laporan berhasil dihapus!');
+                if (typeof loadReports === 'function') loadReports();
+                else location.reload();
+            } catch (err) {
+                alert('Gagal menghapus laporan: ' + err.message);
+            }
+        }
+    }
+});
+
+// 2. SUBMIT FORM: OTOMATIS DETEKSI UPDATE (EDIT) ATAU INSERT (BARU)
+const formReport = document.getElementById('report-form');
+if (formReport) {
+    formReport.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const btnSubmit = document.getElementById('btn-submit-report');
+        const editId = formReport.getAttribute('data-edit-id'); // Cek mode edit
+
+        const mentorName = document.getElementById('report-mentor-name')?.value.trim();
+        const reportDate = document.getElementById('report-date')?.value;
+        const materiText = document.getElementById('report-materi')?.value.trim();
+
+        // Ambil data hadir
+        const attendeesArr = [];
+        document.querySelectorAll('.attendance-check:checked').forEach(chk => {
+            attendeesArr.push(chk.value);
+        });
+
+        const payload = {
+            mentor_name: mentorName,
+            mentor: mentorName,
+            date: reportDate,
+            materi: materiText,
+            attendees: attendeesArr
+        };
+
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Menyimpan...';
+        }
+
+        try {
+            if (editId) {
+                // JIKA MODE EDIT -> UPDATE
+                const { error } = await _supabase
+                    .from('reports')
+                    .update(payload)
+                    .eq('id', editId);
+
+                if (error) throw error;
+                alert('Laporan berhasil diperbarui!');
+            } else {
+                // JIKA MODE TAMBAH BARU -> INSERT
+                const { error } = await _supabase
+                    .from('reports')
+                    .insert([payload]);
+
+                if (error) throw error;
+                alert('Laporan baru berhasil disimpan!');
+            }
+
+            // Bersihkan form & Tutup Modal
+            formReport.removeAttribute('data-edit-id');
+            formReport.reset();
+            
+            const modal = document.getElementById('modal-report');
+            if (modal) modal.style.display = 'none';
+
+            // Refresh Tabel Laporan
+            if (typeof loadReports === 'function') loadReports();
+            else location.reload();
+
+        } catch (err) {
+            alert('Gagal menyimpan laporan: ' + err.message);
+        } finally {
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Simpan Laporan';
+            }
+        }
+    });
+}
 // if (editProfileForm) {
 //     editProfileForm.addEventListener('submit', async (e) => {
 //         e.preventDefault();

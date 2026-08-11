@@ -380,9 +380,13 @@
             <div class="modal-body">
                 <input type="hidden" id="report-id">
                 
+              <!-- <div class="form-group">
+            <label for="report-mentor-name">Nama Mentor / Pembina</label>
+            <input type="text" id="report-mentor-name" required placeholder="Masukkan nama mentor" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+            </div> -->
                 <div class="form-group">
                     <label for="mentor-name">Nama Mentor</label>
-                    <input type="text" id="mentor-name" required placeholder="Contoh: Ahmad Fauzi">
+                    <input type="text" id="mentor-name" required placeholder="Masukkan Nama">
                 </div>
 
                 <div class="form-row">
@@ -642,8 +646,8 @@
 
             <!-- TOMBOL AKSI VIEW MODE -->
             <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; gap: 0.5rem;">
-                <button type="button" id="btn-edit-profile" class="btn btn-primary" style="padding: 0.5rem 1rem; background: #0284c7;">
-                    <i class="fa-solid fa-pen-to-square"></i> Edit Profil
+                <button type="button" id="btn-edit-profile" class="btn btn-primary" style="padding: 0.5rem 1rem; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer;">
+             <i class="fa-solid fa-pen-to-square"></i> Edit Profil
                 </button>
                 <button type="button" id="btn-close-profile" class="btn btn-secondary" style="padding: 0.5rem 1.25rem;">
                     Tutup
@@ -658,6 +662,26 @@
                 <input type="text" id="edit-profile-name" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
             </div>
 
+            <!-- INPUT EMAIL BARU (BARU) -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="edit-profile-email" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Email Akun</label>
+        <input type="email" id="edit-profile-email" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+    </div>
+<!-- DROPDOWN PILIHAN FAKULTAS (BARU) -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="edit-profile-fakultas" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Fakultas</label>
+        <select id="edit-profile-fakultas" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #fff;">
+            <option value="Semua Fakultas (Pusat)">Semua Fakultas (Pusat)</option>
+            <option value="Fakultas Teknik (FT)">Fakultas Teknik (FT)</option>
+            <option value="Fakultas Ilmu Pendidikan (FIP)">Fakultas Ilmu Pendidikan (FIP)</option>
+            <option value="Fakultas Bahasa dan Seni (FBS)">Fakultas Bahasa dan Seni (FBS)</option>
+            <option value="Fakultas Matematika dan IPA (FMIPA)">Fakultas Matematika dan IPA (FMIPA)</option>
+            <option value="Fakultas Ilmu Sosial (FIS)">Fakultas Ilmu Sosial (FIS)</option>
+            <option value="Fakultas Keolahragaan (FIK)">Fakultas Keolahragaan (FIK)</option>
+            <option value="Fakultas Ekonomi (FE)">Fakultas Ekonomi (FE)</option>
+            <option value="Fakultas Psikologi (FPsi)">Fakultas Psikologi (FPsi)</option>
+        </select>
+    </div>
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="edit-profile-password" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.875rem;">Password Baru (Opsional)</label>
                 <input type="password" id="edit-profile-password" placeholder="Biarkan kosong jika tidak diubah" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
